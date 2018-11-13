@@ -1,0 +1,18 @@
+int ctsPin = 9;
+void setup() {
+ Serial.begin(9600);
+// pinMode(relay, OUTPUT);
+ pinMode(ctsPin, INPUT);
+}
+void loop() {
+int ctsValue = digitalRead(ctsPin);
+if (ctsValue == HIGH){
+// digitalWrite(ledPin, HIGH);
+ Serial.println("TOUCHED");
+ }
+ else{
+// digitalWrite(ledPin,LOW);
+ Serial.println("not touched");
+ }
+ delay(500);
+}
