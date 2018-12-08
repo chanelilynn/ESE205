@@ -36,7 +36,7 @@
 
 // not me SEE REFERECE after library inclusion
 //The amount of LEDs in the setup
-#define NUM_LEDS 300
+#define NUM_LEDS 250
 //The pin that controls the LEDs
 #define LED_PIN 6
 //The pin that we read sensor values form
@@ -50,9 +50,9 @@
 
 /** Other macros */
 //How many previous sensor values effects the operating average?
-#define AVGLEN 20
+#define AVGLEN 25
 //How many previous sensor values decides if we are on a peak/HIGH (e.g. in a song)
-#define LONG_SECTOR 100
+#define LONG_SECTOR 40
 
 //Mneumonics
 #define LARGE 3
@@ -67,9 +67,9 @@
 #define DEV_THRESH 0.8
 
 //Arduino loop delay
-#define DELAY .001
+#define DELAY 5
 
-// end reference 
+// end reference
 
 //Nish
 auto timer = timer_create_default();
@@ -79,7 +79,6 @@ int ctsPin = 12;
 int counter = 0;
 //end
 
- 
 // not me SEE REFERECE after library inclusion
 float fscale( float originalMin, float originalMax, float newBegin, float newEnd, float inputValue, float curve);
 void insert(int val, int *avgs, int len);
@@ -123,13 +122,13 @@ struct time_keeping {
 
 //How much to increment or decrement each color every cycle
 struct color {
-  int r;
-  int g;
-  int b;
+  double r;
+  double g;
+  double b;
 };
 
 struct time_keeping high;
-struct color Color;
+struct color clr;
 
 //end reference
 
@@ -142,7 +141,8 @@ void setup() {
   digitalWrite(13, HIGH); // jank +5V pin
   //Set all lights to make sure all are working as expected
   FastLED.addLeds<WS2812B, LED_PIN>(leds, NUM_LEDS);
-  for (int i = 0; i < NUM_LEDS; i++)
+  //for (int i = 0; i < NUM_LEDS; i++)
+  for (int i = NUM_LEDS; i >= 0; i--)
     leds[i] = CRGB(100, 100, 100);
   FastLED.show();
   delay(10);
@@ -155,9 +155,9 @@ void setup() {
   //Initial values
   high.times = 0;
   high.times_start = millis();
-  Color.r = 1;
-  Color.g = 1;
-  Color.b = 1;
+  clr.r = 1;
+  clr.g = 1;
+  clr.b = 1;
 }
 
 /*With this we can change the mode if we want to implement a general
@@ -165,25 +165,26 @@ void setup() {
   sound is low for a while? */
 void loop() {
   touchSensorMonitor();
-  optionChecker(); 
-  //delay(DELAY);       // delay in between reads for stability
+  optionChecker();
+  delay(DELAY);
+  // delay in between reads for stability
 }
-// end 
+// end
 
 //Jordan
 void touchSensorMonitor() {
   int ctsValue = digitalRead(ctsPin);
   if (ctsValue == HIGH && !trigger) {
     trigger = true;
-    Serial.println("TOUCHED");
+    //Serial.println("TOUCHED");
     counter++ ;
     if (counter >= 3) {
       counter = counter % 3;
     }
-    Serial.println(counter);
+    //Serial.println(counter);
   }
   if (ctsValue == LOW) {
-    Serial.println("not touched");
+    //Serial.println("not touched");
     trigger = false;
   }
 }
@@ -213,7 +214,7 @@ void optionChecker() {
   TODO: Not very well written, remove hardcoded values, and make it more
   reusable and configurable.  */
 
-// not me SEE REFERECE after library inclusion  
+// not me SEE REFERECE after library inclusion
 void check_high(int avg) {
   if (avg > (song_avg / iter * 1.1))  {
     if (high.times != 0) {
@@ -240,20 +241,22 @@ void check_high(int avg) {
 // end reference
 
 //Nish
-void colorReset() {
-  for (int i = 0; i < NUM_LEDS; i++)
-    leds[i] = CRGB(random(0, 30), random(0, 30), random(0, 30));
-  FastLED.show();
-}
+//void colorReset() {
+//  for (int i = 0; i < NUM_LEDS; i++)
+//    leds[i] = CRGB(random(0, 30), random(0, 30), random(0, 30));
+//  FastLED.show();
+//}
 
 void colorNone() {
-  for (int i = 0; i < NUM_LEDS; i++)
+  //for (int i = 0; i < NUM_LEDS; i++)
+  for (int i = NUM_LEDS; i >= 0; i--)
     leds[i] = CRGB(0, 0, 0);
   FastLED.show();
 }
 
 void colorWhite() {
-  for (int i = 0; i < NUM_LEDS; i++)
+  //for (int i = 0; i < NUM_LEDS; i++)
+  for (int i = NUM_LEDS; i >= 0; i--)
     leds[i] = CRGB(100, 100, 100);
   FastLED.show();
 }
@@ -302,46 +305,130 @@ void visualize_music() {
   check_high(longavg);
 
   if (songmode == LARGE) {
-    fade_scale = 3;
-    if ( sensor_value < 300) {
-      Color.r = 0 ;
-      Color.b = 1 ;
-      Color.g = 0 ;
-     // timer.every(1000, colorReset);
+    fade_scale = 1.08;
+    if ( sensor_value < 100) {
+      clr.r = 10;
+      clr.b = 0 ;
+      clr.g = 0 ;
+      // timer.every(2000, colorReset);
     }
-    else if (sensor_value >= 300 && sensor_value < 320) {
-      Color.r = 1 ;
-      Color.b = 0 ;
-      Color.g = 0;
-     // timer.every(1000, colorReset);
+    else if (sensor_value >= 100 && sensor_value < 200) {
+      clr.r = 10;
+      clr.b = 5 ;
+      clr.g = 0;
+      // timer.every(2000, colorReset);
     }
-    else if ( sensor_value >= 340) {
-      Color.r = 1;
-      Color.b = 1;
-      Color.g = 0 ;
-      //timer.every(1000, colorReset);
+    else if (sensor_value >= 200 && sensor_value < 250) {
+      clr.r = 10 ;
+      clr.b = 10 ;
+      clr.g = 0;
+      // timer.every(2000, colorReset);
+    }
+    else if (sensor_value >= 250 && sensor_value < 300) {
+      clr.r = 10 ;
+      clr.b = 10 ;
+      clr.g = 5;
+      // timer.every(2000, colorReset);
+    }
+    else if (sensor_value >= 300 && sensor_value < 350) {
+      clr.r = 10 ;
+      clr.b = 5 ;
+      clr.g = 10;
+      // timer.every(2000, colorReset);
+    }
+    else if (sensor_value >= 350 && sensor_value < 400) {
+      clr.r = 15;
+      clr.b = 5 ;
+      clr.g = 15;
+      // timer.every(2000, colorReset);
+    }
+    else if (sensor_value >= 400 && sensor_value < 500) {
+      clr.r = 10 ;
+      clr.b = 20 ;
+      clr.g = 10;
+      // timer.every(2000, colorReset);
+    }
+    else if (sensor_value >= 500 && sensor_value < 600) {
+      clr.r = 10 ;
+      clr.b = 10 ;
+      clr.g = 20;
+      // timer.every(2000, colorReset);
+    }
+    else if (sensor_value >= 600 && sensor_value < 700) {
+      clr.r = 10 ;
+      clr.b = 5 ;
+      clr.g = 20;
+      // timer.every(2000, colorReset);
+    }
+    else if ( sensor_value >= 700) {
+      clr.r = 20;
+      clr.b = 0;
+      clr.g = 20;
+      // timer.every(2000, colorReset);
     }
 
   }
   else if (songmode == NORMAL) {
-    fade_scale = 2;
-    if ( sensor_value < 300) {
-      Color.r = 1 ;
-      Color.b = 0 ;
-      Color.g = 0 ;
-      //timer.every(1000, colorReset);
+    fade_scale = 1.15;
+    if ( sensor_value < 100) {
+      clr.r = 0;
+      clr.b = 0 ;
+      clr.g = 10 ;
+      // timer.every(2000, colorReset);
     }
-    else if (sensor_value >= 300 && sensor_value < 320) {
-      Color.r = 0 ;
-      Color.b = 1 ;
-      Color.g = 0;
-     // timer.every(1000, colorReset);
+    else if (sensor_value >= 100 && sensor_value < 200) {
+      clr.r = 5;
+      clr.b = 0 ;
+      clr.g = 10;
+      // timer.every(2000, colorReset);
     }
-    else if ( sensor_value >= 340) {
-      Color.r = 0;
-      Color.b = 0;
-      Color.g = 1 ;
-     // timer.every(1000, colorReset);
+    else if (sensor_value >= 200 && sensor_value < 250) {
+      clr.r = 10 ;
+      clr.b = 0 ;
+      clr.g = 10;
+      // timer.every(2000, colorReset);
+    }
+    else if (sensor_value >= 250 && sensor_value < 300) {
+      clr.r = 10 ;
+      clr.b = 5 ;
+      clr.g = 10;
+      // timer.every(2000, colorReset);
+    }
+    else if (sensor_value >= 300 && sensor_value < 350) {
+      clr.r = 5 ;
+      clr.b = 10 ;
+      clr.g = 10;
+      // timer.every(2000, colorReset);
+    }
+    else if (sensor_value >= 350 && sensor_value < 400) {
+      clr.r = 5;
+      clr.b = 15 ;
+      clr.g = 15;
+      // timer.every(2000, colorReset);
+    }
+    else if (sensor_value >= 400 && sensor_value < 500) {
+      clr.r = 10 ;
+      clr.b = 10 ;
+      clr.g = 20;
+      // timer.every(2000, colorReset);
+    }
+    else if (sensor_value >= 500 && sensor_value < 600) {
+      clr.r = 10 ;
+      clr.b = 20 ;
+      clr.g = 10;
+      // timer.every(2000, colorReset);
+    }
+    else if (sensor_value >= 600 && sensor_value < 700) {
+      clr.r = 5 ;
+      clr.b = 20 ;
+      clr.g = 10;
+      // timer.every(2000, colorReset);
+    }
+    else if ( sensor_value >= 700) {
+      clr.r = 20;
+      clr.b = 20;
+      clr.g = 00;
+      // timer.every(2000, colorReset);
     }
 
   }
@@ -354,31 +441,39 @@ void visualize_music() {
     some interesting light effects appear! */
   for (int i = 0; i < NUM_LEDS; i++)
     //The leds we want to show
+    // we mod by 150 to create a wrap around so the light doesn't just stay on white
+    // we also use 150 instead of the max 255 because we needed to reduce power draw
+    // so we wouldn't set off the surge protector on the external power source 
     if (i < curshow) {
-      if (leds[i].r + Color.r > 255)
-        leds[i].r = (leds[i].r + Color.r) % 255;
-      else if (leds[i].r + Color.r < 0)
+      if (leds[i].r + clr.r > 150)
+        leds[i].r = (int)(leds[i].r + clr.r) % 150;
+      else if (leds[i].r + clr.r < 0)
         leds[i].r = 0;
       else
-        leds[i].r = leds[i].r + Color.r;
+        leds[i].r = leds[i].r + clr.r;
 
-      if (leds[i].g + Color.g > 255)
-        leds[i].g = (leds[i].g + Color.g) % 255;
-      else if (leds[i].g + Color.g < 0)
+      if (leds[i].g + clr.g > 150)
+        leds[i].g = (int)(leds[i].g + clr.g) % 150;
+      else if (leds[i].g + clr.g < 0)
         leds[i].g = 0;
       else
-        leds[i].g = leds[i].g + Color.g;
+        leds[i].g = leds[i].g + clr.g;
 
-      if (leds[i].b + Color.b > 255)
-        leds[i].b = (leds[i].b + Color.b) % 255;
-      else if (leds[i].b + Color.b < 0)
+      if (leds[i].b + clr.b > 150)
+        leds[i].b = (int)(leds[i].b + clr.b) % 150;
+      else if (leds[i].b + clr.b < 0)
         leds[i].b = 0;
       else
-        leds[i].b = leds[i].b + Color.b;
+        leds[i].b = leds[i].b + clr.b;
 
       //All the other LEDs begin their fading journey to eventual total darkness
     } else {
+      //leds[i] = CRGB(leds[i].r, leds[i].g, leds[i].b);
       leds[i] = CRGB(leds[i].r / fade_scale, leds[i].g / fade_scale, leds[i].b / fade_scale);
+      //leds[i] = CRGB(150, 0, 0);
+      //leds[i+3] = CRGB(leds[i].r / fade_scale, leds[i].g / fade_scale, leds[i].b / fade_scale);
+      //i++;
+      //i++;
     }
   FastLED.show();
 }
